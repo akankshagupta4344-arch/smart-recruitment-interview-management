@@ -2,8 +2,9 @@
 -- MODULE 2: INTERVIEW MANAGEMENT (Oracle SQL)
 -- Depends on existing tables: APPLICATION, CANDIDATE, JOB.
 -- Run 03_SQL/code.sql and 03_Basic_Queries.sql/02_Insert_Data.sql first.
--- Run this script once in the same Oracle schema. The setup blocks are re-runnable
--- for table creation, but sample demo inserts should be checked before rerunning.
+-- Run after the core schema and sample data have been created.
+-- Table creation and interviewer/round MERGE data are repeatable.
+-- Load interview and feedback rows once from 08_Insert_Interview_Sample_Data.sql.
 
 SET SERVEROUTPUT ON;
 
@@ -89,9 +90,8 @@ END;
 PROMPT Tables Interviewer, Interview_Round, Interview, Interview_Feedback created or already exist.
 
 -- =====================================================
--- DEMO DATA
--- These inserts use the existing sample application/job IDs from this project.
--- The guarded MERGE statements make demo data safe to rerun.
+-- INTERVIEWER AND ROUND MASTER DATA
+-- These MERGE statements are repeatable and use IDs from the core sample dataset.
 -- =====================================================
 
 MERGE INTO Interviewer t
@@ -122,29 +122,8 @@ WHEN MATCHED THEN UPDATE SET t.Job_ID=s.job,t.Round_Number=s.rn,t.Round_Name=s.n
 WHEN NOT MATCHED THEN INSERT (Round_ID,Job_ID,Round_Number,Round_Name,Round_Type,Duration_Minutes,Is_Mandatory)
 VALUES (s.id,s.job,s.rn,s.nm,s.typ,s.dur,s.mandatory);
 
-MERGE INTO Interview t
-USING (
-  SELECT 'IV001' id,'A002' app,'RD001' rnd,'I002' interviewer,
-         TIMESTAMP '2026-11-02 10:00:00' st,TIMESTAMP '2026-11-02 11:00:00' en,'ONLINE' mode,'Video meeting link to be shared' loc,'SCHEDULED' status FROM dual UNION ALL
-  SELECT 'IV002','A005','RD004','I002',TIMESTAMP '2026-11-02 11:30:00',TIMESTAMP '2026-11-02 12:30:00','ONLINE','Video meeting link to be shared','CONFIRMED' FROM dual UNION ALL
-  SELECT 'IV003','A006','RD006','I003',TIMESTAMP '2026-11-03 10:00:00',TIMESTAMP '2026-11-03 11:00:00','IN_PERSON','Data Science Lab - Room 2','SCHEDULED' FROM dual UNION ALL
-  SELECT 'IV004','A007','RD008','I003',TIMESTAMP '2026-11-03 14:00:00',TIMESTAMP '2026-11-03 15:15:00','ONLINE','Video meeting link to be shared','SCHEDULED' FROM dual UNION ALL
-  SELECT 'IV005','A004','RD004','I001',TIMESTAMP '2026-11-04 10:00:00',TIMESTAMP '2026-11-04 11:00:00','ONLINE','Video meeting link to be shared','COMPLETED' FROM dual UNION ALL
-  SELECT 'IV006','A001','RD001','I002',TIMESTAMP '2026-11-04 11:30:00',TIMESTAMP '2026-11-04 12:30:00','PHONE','Recruiter will call candidate','COMPLETED' FROM dual
-) s ON (t.Interview_ID=s.id)
-WHEN MATCHED THEN UPDATE SET t.Application_ID=s.app,t.Round_ID=s.rnd,t.Interviewer_ID=s.interviewer,t.Scheduled_Start=s.st,t.Scheduled_End=s.en,t.Interview_Mode=s.mode,t.Meeting_Location=s.loc,t.Interview_Status=s.status
-WHEN NOT MATCHED THEN INSERT (Interview_ID,Application_ID,Round_ID,Interviewer_ID,Scheduled_Start,Scheduled_End,Interview_Mode,Meeting_Location,Interview_Status)
-VALUES (s.id,s.app,s.rnd,s.interviewer,s.st,s.en,s.mode,s.loc,s.status);
-
-MERGE INTO Interview_Feedback t
-USING (
-  SELECT 'FB001' id,'IV005' interview,8.5 tech,8.0 comm,8.5 prob,8.4 overall,'HIRE' rec,'Strong fundamentals and clear problem-solving approach.' comments,DATE '2026-11-04' dt FROM dual UNION ALL
-  SELECT 'FB002','IV006',7.5,8.5,7.5,7.8,'HOLD','Good communication; explore technical depth in a follow-up. ',DATE '2026-11-04' FROM dual
-) s ON (t.Feedback_ID=s.id)
-WHEN MATCHED THEN UPDATE SET t.Interview_ID=s.interview,t.Technical_Score=s.tech,t.Communication_Score=s.comm,t.Problem_Solving_Score=s.prob,t.Overall_Score=s.overall,t.Recommendation=s.rec,t.Comments=s.comments,t.Feedback_Date=s.dt
-WHEN NOT MATCHED THEN INSERT (Feedback_ID,Interview_ID,Technical_Score,Communication_Score,Problem_Solving_Score,Overall_Score,Recommendation,Comments,Feedback_Date)
-VALUES (s.id,s.interview,s.tech,s.comm,s.prob,s.overall,s.rec,s.comments,s.dt);
-
+-- Interview and feedback rows are loaded separately so that
+-- 08_Insert_Interview_Sample_Data.sql is the single sample-data source.
 COMMIT;
 
 -- =====================================================

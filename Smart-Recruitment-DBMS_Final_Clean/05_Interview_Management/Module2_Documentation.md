@@ -33,13 +33,15 @@ This module extends the existing Smart Recruitment & Interview Management System
 10. Preview of the feedback view.
 
 ## Run order
-1. Existing project table creation script: `03_SQL/code.sql`.
-2. Existing sample data script: `03_Basic_Queries.sql/02_Insert_Data.sql`.
-3. `06_Interview_Management.sql`.
-4. Optional trigger test: `07_Test_Interview_Conflict.sql`.
 
-Use the same Oracle schema for every script. In Oracle SQL Developer, open a `.sql` file and use **Run Script (F5)** because the script contains PL/SQL blocks, slash terminators, and SQL*Plus-style `PROMPT` commands. If the base tables and data are already loaded, do not recreate/reinsert them; run only Module 2.
+1. Run `03_SQL/code.sql` to create the original eight core tables.
+2. Run `03_Basic_Queries.sql/02_Insert_Data.sql` to load the core sample data.
+3. Run the original basic-query, candidate-screening, and selection-analytics scripts as described in the root package README.
+4. Run `06_Interview_Management.sql` in the same schema. It creates the Module 2 tables if absent, merges interviewer and round master data, creates the overlap-prevention trigger, and defines the reporting views.
+5. Run `08_Insert_Interview_Sample_Data.sql` once to add the seven interview records and four feedback records. Do not rerun this insert script against populated Module 2 data.
+6. Run `07_Test_Interview_Conflict.sql` separately to test overlap prevention. The expected result is `ORA-20051`; the attempted insert should be rejected.
 
+Use SQL Developer **Run Script (F5)** for the scripts containing PL/SQL blocks, `/` terminators, or `PROMPT` commands. Use the same Oracle schema for all scripts.
 ## Viva summary
 - `INTERVIEW_ROUND` stores the interview process for each job; `ROUND_NUMBER` gives the sequence.
 - `INTERVIEW` connects an application to a round, interviewer, time slot, mode, and status.
@@ -47,5 +49,6 @@ Use the same Oracle schema for every script. In Oracle SQL Developer, open a `.s
 - The compound trigger checks time overlaps after the statement completes, avoiding the mutating-table problem associated with querying the same table from a row-level trigger.
 - The sample data is fictional and intended for classroom demonstration.
 
-## Important integration note
-The current repository's documented base schema has no interview tables. This module therefore adds these four tables without changing the eight existing core tables. Update the final ER diagram and project documentation to show the new Module 2 entities and relationships before submission.
+## Integration note
+
+The original project schema contains eight core tables. Module 2 adds `INTERVIEWER`, `INTERVIEW_ROUND`, `INTERVIEW`, and `INTERVIEW_FEEDBACK`, linked to the existing department, job, and application data. The Module 2 ER diagram is included in this folder; the original project ER diagram remains unchanged.
